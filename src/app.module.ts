@@ -15,18 +15,10 @@ const envFilePath: string = `${__dirname}/common/env/development.env`;
     AppointmentManagerModule,
   ],
   providers: [
-    // {
-    //   provide: APP_FILTER,
-    //   useClass: AllExceptionsFilter,
-    // },
     {
       provide: APP_INTERCEPTOR,
       useClass: MorganInterceptor('dev'),
     },
-    // {
-    //   provide: APP_INTERCEPTOR,
-    //   useClass: ResponseInterceptor,
-    // },
   ],
 })
 export class AppModule {}
