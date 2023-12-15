@@ -22,13 +22,13 @@ export class AppointmentManagerService implements OnModuleInit {
     this.quotesAvailable = [];
     this.timeAvailable = 0;
 
-    const quotesDay = this.quotes
+    const quotesDay: Array<IQuotes> = this.quotes
       .get(day)
       .sort((a, b) => +a.Hour.split(':')[0] - +b.Hour.split(':')[0]);
 
-    let startTime =
+    let startTime: number =
       +this.startTime.split(':')[0] * 60 + +this.startTime.split(':')[1];
-    const endTime =
+    const endTime: number =
       +this.endTime.split(':')[0] * 60 + +this.endTime.split(':')[1];
 
     quotesDay.forEach((quote) => {
@@ -47,11 +47,11 @@ export class AppointmentManagerService implements OnModuleInit {
     return {
       availableSpaces: this.quotesAvailable,
       scheduledAppoinments: quotesDay,
-      timeAvailable: this.getTime(),
+      timeAvailable: this.timeToHour(),
     };
   }
 
-  getTime(time?: number): string {
+  timeToHour(time?: number): string {
     const timeInit = time ?? this.timeAvailable;
     const hourStart = timeInit / 60;
     const timeSplit = hourStart.toString().split('.');
@@ -67,7 +67,7 @@ export class AppointmentManagerService implements OnModuleInit {
     const Duration = `${minutes - startTime}`;
 
     const quoteAvailable: IQuotes = {
-      Hour: this.getTime(startTime),
+      Hour: this.timeToHour(startTime),
       Day: day,
       Duration,
     };
@@ -77,12 +77,13 @@ export class AppointmentManagerService implements OnModuleInit {
   }
 
   createQuotes(quote: IQuotes): IConstulQuote {
-    const quotesDay = this.quotes.get(quote.Day);
+    const quotesDay: Array<IQuotes> = this.quotes.get(quote.Day);
+    if (!quotesDay) throw new BadRequestException('Day invalid.');
 
-    const endTime =
+    const endTime: number =
       +this.endTime.split(':')[0] * 60 + +this.endTime.split(':')[1];
 
-    const startTime =
+    const startTime: number =
       +quote.Hour.split(':')[0] * 60 + +quote.Hour.split(':')[1];
 
     if (startTime + +quote.Duration > endTime)
@@ -90,7 +91,16 @@ export class AppointmentManagerService implements OnModuleInit {
         'La cita no puede superar la hora final de atencion',
       );
 
-    if (!quotesDay) throw new BadRequestException('Day invalid.');
+    const validaTime = quotesDay.some(({ Duration, Hour }) => {
+      const hour: number =
+        +Hour.split(':')[0] * 60 + +Hour.split(':')[1] + +Duration;
+
+      return hour >= startTime;
+    });
+
+    if (validaTime)
+      throw new BadRequestException('Ya existe una cita programada.');
+
     quotesDay.push({ ...quote });
     this.quotes.set(quote.Day, quotesDay);
 
