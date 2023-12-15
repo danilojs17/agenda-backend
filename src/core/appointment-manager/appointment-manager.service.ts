@@ -91,12 +91,16 @@ export class AppointmentManagerService implements OnModuleInit {
         'La cita no puede superar la hora final de atencion',
       );
 
-    const validaTime = quotesDay.some(({ Duration, Hour }) => {
-      const hour: number =
-        +Hour.split(':')[0] * 60 + +Hour.split(':')[1] + +Duration;
-
-      return hour >= startTime;
-    });
+    const validaTime = quotesDay
+      .filter(({ Hour }) => {
+        const hourTime: number = +Hour.split(':')[0] * 60 + +Hour.split(':')[1];
+        return hourTime <= startTime;
+      })
+      .some(({ Duration, Hour }) => {
+        const hour: number =
+          +Hour.split(':')[0] * 60 + +Hour.split(':')[1] + +Duration;
+        return hour > startTime;
+      });
 
     if (validaTime)
       throw new BadRequestException('Ya existe una cita programada.');
